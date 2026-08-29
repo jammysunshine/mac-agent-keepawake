@@ -32,6 +32,12 @@ Real trace from `pmset -g log`:
 
 Ten minutes of work lost, and the session had to be nursed back by hand.
 
+Upstream tracking for Claude Code specifically:
+[anthropics/claude-code#81832](https://github.com/anthropics/claude-code/issues/81832)
+— the inhibitor SIGKILLs its `caffeinate` before spawning the replacement, so
+assertions briefly hit zero every 240 s. This tool is a stopgap, not a substitute
+for that fix.
+
 The naive fix — wrapping the agent in `caffeinate` for its whole lifetime — trades
 one bug for a worse one: your Mac then stays awake for as long as a terminal is
 *open*, not as long as it is *working*. On a laptop that is a dead battery.
