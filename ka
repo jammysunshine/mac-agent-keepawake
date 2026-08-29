@@ -1,0 +1,18 @@
+#!/bin/bash
+# ka — run one agent session with sleep held for its entire lifetime.
+#
+# For agents that hold no inhibitor of their own (qwen, kilo, opencode): while
+# they think or stream there is no child process and no assertion to observe,
+# so the daemon cannot tell them apart from an idle prompt. CPU is not usable
+# either — an idle TUI drifts 0.5-1.7 CPU-seconds per 15 s, overlapping with
+# real work.
+#
+# This is the blunt alternative: hold the assertion for as long as the process
+# runs. It keeps the Mac awake while the session is merely OPEN, so use it for
+# an unattended run, not as your normal launcher.
+#
+#   ka qwen -p "long task"
+#   ka opencode run ...
+
+[ $# -eq 0 ] && { echo "usage: ka <agent> [args...]" >&2; exit 2; }
+exec caffeinate -ims "$@"

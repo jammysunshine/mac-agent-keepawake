@@ -157,6 +157,28 @@ Codex is worth calling out as the reference implementation: one
 when the turn ends. Nothing to race, nothing to renew, nothing to observe from
 outside — and nothing for this tool to add.
 
+## Agents with no inhibitor of their own
+
+`qwen`, `kilo` and `opencode` raise no assertion, so signal 2 does not exist for
+them. Their tool calls are covered by signal 1; their thinking and streaming are
+not, because that work spawns no child process.
+
+CPU load does not close the gap. Measured across four idle sessions, a Claude
+TUI sitting at a prompt drifts **0.5-1.7 CPU-seconds per 15 s poll** — spinners,
+timers and re-renders — which overlaps with light streaming work. No threshold
+separates the two, and a low one pins the machine awake whenever a session is
+merely open.
+
+For an unattended run with one of those agents, hold the assertion explicitly:
+
+```sh
+./ka qwen -p "some long task"
+```
+
+`ka` keeps the Mac awake for the whole lifetime of that process, including while
+it idles. That is the trade-off, which is why it is opt-in per run rather than
+the default.
+
 ## Cost
 
 Measured over 60 seconds of running:
