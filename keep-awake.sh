@@ -17,10 +17,16 @@ AGENTS='^(claude|codex|gemini|qwen|kilo|cursor-agent|aider|opencode|crush)$'
 
 hold=""; idle=0
 
-# Busy when a shell descended from an agent process has a child, i.e. a tool
-# command is actually executing. Walking up from shells (rather than down from
-# agents) keeps GUI agents safe: an Electron app like Antigravity always has
-# helper children, which would otherwise read as permanently busy.
+# Busy on either of two signals, both requiring an agent ancestor:
+#   1. a shell with a child   -> a tool command is executing
+#   2. the agent's own caffeinate -> the agent considers itself busy
+#      (model inference, streaming, context compaction: no child process
+#      exists for those, so signal 1 alone reads them as idle). Mirroring
+#      the agent's own assertion also covers the gap left when its relay
+#      kills one caffeinate before spawning the next.
+# Walking up from the signal, rather than down from agents, keeps GUI agents
+# safe: an Electron app always has helper children and would otherwise read
+# as permanently busy.
 busy() {
   ps -eo pid=,ppid=,comm= | awk -v agents="$AGENTS" '
     { pid=$1; pp=$2; c=$0
@@ -29,8 +35,9 @@ busy() {
       parent[pid]=pp; name[pid]=c; kids[pp]++ }
     END {
       for (p in name) {
-        if (name[p] !~ /^(zsh|bash|sh|fish|dash|ksh)$/) continue
-        if (kids[p] == 0) continue
+        shell = (name[p] ~ /^(zsh|bash|sh|fish|dash|ksh)$/ && kids[p] > 0)
+        inhib = (name[p] == "caffeinate")
+        if (!shell && !inhib) continue
         a = parent[p]
         for (d = 0; d < 40 && a != "" && a != "0" && a != "1"; d++) {
           if (name[a] ~ agents) { print "busy"; exit }

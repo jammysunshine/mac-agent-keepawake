@@ -118,11 +118,17 @@ Two environment knobs, set in the plist if you want them:
 
 ## How it decides "busy"
 
-> A shell process, descended from an agent process at any depth, has a child.
+Two signals, either of which counts, both requiring an agent ancestor:
 
-An idle agent's children are its persistent tool shell and its own `caffeinate`.
-A shell only acquires a child when it is actually running a command, so that child
-is the signal.
+1. **a shell with a child** — a tool command is executing. An idle agent's shell
+   has no children, so the child is the signal.
+2. **the agent's own `caffeinate`** — the agent considers itself busy.
+
+Signal 2 matters more than it looks. Model inference, response streaming and
+context compaction spawn no child process at all, so signal 1 alone reads a
+hard-working session as idle and lets the machine sleep underneath it. Mirroring
+the agent's own assertion also covers the window where its relay kills one
+`caffeinate` before spawning the next.
 
 The check walks **up** from shells rather than down from agents. This matters for
 GUI agents: an Electron-based tool always has GPU, renderer and plugin helper
