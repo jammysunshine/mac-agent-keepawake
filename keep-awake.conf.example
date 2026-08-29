@@ -1,0 +1,4 @@
+# Agent CLIs to guard against sleep during long tool calls.
+# One extended-regex line, matched against the process name.
+# Add a name here and restart:  launchctl kickstart -k gui/$UID/com.keepawake.agents
+^(claude|codex|qwen|kilo|opencode|agy)$
