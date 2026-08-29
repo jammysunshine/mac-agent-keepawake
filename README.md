@@ -138,6 +138,25 @@ permanently busy and pin your machine awake for as long as the IDE is open.
 Implementation is one `ps` piped into one `awk` per poll — which is why session
 count does not affect cost.
 
+## Coverage by agent
+
+The second signal only exists for agents that raise an inhibitor of their own,
+so coverage of *thinking* time varies. Tool-call coverage is universal.
+
+| Agent      | Its own sleep handling                  | Covered here                |
+|------------|-----------------------------------------|-----------------------------|
+| `codex`    | in-process assertion for the whole turn | needs nothing — already correct |
+| `claude`   | `caffeinate` relay with 240 s gaps      | tool calls and model work   |
+| `agy`      | `caffeinate`                            | tool calls and model work   |
+| `qwen`     | none found                              | tool calls only             |
+| `kilo`     | none found                              | tool calls only             |
+| `opencode` | none found                              | tool calls only             |
+
+Codex is worth calling out as the reference implementation: one
+`IOPMAssertionCreateWithName` held for the duration of an active turn, released
+when the turn ends. Nothing to race, nothing to renew, nothing to observe from
+outside — and nothing for this tool to add.
+
 ## Cost
 
 Measured over 60 seconds of running:
